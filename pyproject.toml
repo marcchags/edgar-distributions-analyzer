@@ -1,0 +1,18 @@
+[build-system]
+requires = ["setuptools>=68"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "edgar-distributions-analyzer"
+version = "0.1.0"
+description = "ETF distributions by character (income, realized gain, return of capital) from SEC N-CSR filings"
+requires-python = ">=3.12"
+dependencies = ["edgartools", "polars", "lxml", "pyarrow"]
+
+[project.scripts]
+get_etf = "get_etf:main"
+get_etf_trust = "get_etf_trust:main"
+get_distribution_data = "get_distribution_data:main"
+
+[tool.setuptools]
+py-modules = ["etf_common", "get_etf", "get_etf_trust", "get_distribution_data"]
