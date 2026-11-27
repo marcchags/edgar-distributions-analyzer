@@ -34,13 +34,13 @@ CONVERTED = re.compile(r"reorganiz|conver(?:sion|ted)|predecessor|acquired fund"
 
 
 def _ws(s: str) -> str:
-    return re.sub(r"\s+", " ", s.replace("\xa0", " ").replace("’", "'")).strip()
+    return re.sub(r"\s+", " ", s.replace("\N{RIGHT SINGLE QUOTATION MARK}", "'")).strip()
 
 
 def _num(t: str) -> float | None:
     """'(7.63 )' -> -7.63, '$—' -> 0.0, '49.63(4)' -> 49.63, anything else (labels, lone footnote markers) -> None."""
-    t = re.sub(r"[$\s,%]", "", re.sub(r"(?<=[\d)—–-])\s*\(\w{1,2}\)$", "", t))
-    if t and not t.strip("—–-"):
+    t = re.sub(r"[$\s,%]", "", re.sub(r"(?<=[\d)\N{EM DASH}\N{EN DASH}-])\s*\(\w{1,2}\)$", "", t))
+    if t and not t.strip("\N{EM DASH}\N{EN DASH}-"):
         return 0.0
     m = None if re.fullmatch(r"\(\d{1,2}\)", t) else re.fullmatch(r"(\(|-)?(\d*\.?\d+)\)?", t)
     return (-1 if m[1] else 1) * float(m[2]) if m else None
@@ -99,7 +99,7 @@ def _character(label: str) -> str:
 def _scale(label: str, table_text: str) -> float:
     """Multiplier to dollars for a 'Net assets, end of period (000)' row; the unit may sit elsewhere in the table."""
     for text, million, thousand in ((label, r"million|000,000", r"thousand|000"),
-                                    (table_text, r"in millions|\(millions\)", r"in thousands|\(thousands\)|\(000|000['’]?s omitted")):
+                                    (table_text, r"in millions|\(millions\)", r"in thousands|\(thousands\)|\(000|000['\N{RIGHT SINGLE QUOTATION MARK}]?s omitted")):
         if re.search(million, text, re.I):
             return 1e6
         if re.search(thousand, text, re.I):
@@ -175,7 +175,7 @@ def _parse_table(table) -> list[dict]:
     # periods are columns, items are rows. A column header is a full date ('Year Ended 5/31/26'), or a bare year
     # completed by a spanning cell in a row above ('Year Ended October 31,' over '2023 | 2022').
     cells = [(a, b, MARKER.sub("", t).strip()) for r in head for a, b, t in r]
-    full = [c for c in cells if DATE.search(c[2]) and not re.search(r"(through|to|[–-])$", c[2], re.I)]
+    full = [c for c in cells if DATE.search(c[2]) and not re.search(r"(through|to|[\N{EN DASH}-])$", c[2], re.I)]
     years = [c for c in cells if re.fullmatch(r"(?:19|20)\d{2}", c[2])]
     prefix = [c for c in cells if c not in full and c not in years and PREFIX.search(c[2])]
     over = lambda c, col: c[0] < col[1] and col[0] < c[1]
